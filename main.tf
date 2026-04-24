@@ -139,6 +139,8 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     # generate key
     "docker exec laravel_app bash -c 'cd /var/www && php artisan key:generate'",
 
+    "docker exec laravel_app bash -c \"sed -i 's/DB_HOST=.*/DB_HOST=db/' /var/www/.env\"",
+
     # ✅ FIX PERMISSIONS (CORRECT PATH)
     "docker exec laravel_app bash -c 'cd /var/www && chmod -R 777 storage bootstrap/cache'",
 
@@ -150,6 +152,8 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
 
     # debug
     "docker ps"
+
+    "docker exec laravel_app bash -c 'chmod -R 775 /var/www/storage /var/www/bootstrap/cache'",
   ]
 }
 }
