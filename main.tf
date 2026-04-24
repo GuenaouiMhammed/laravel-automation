@@ -116,6 +116,14 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     # prepare env
     "cp /opt/laravel/app/.env.example /opt/laravel/app/.env",
 
+     # fix DB config
+    "sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /opt/laravel/app/.env",
+    "sed -i 's/DB_HOST=.*/DB_HOST=db/' /opt/laravel/app/.env",
+    "sed -i 's/# DB_PORT=.*/DB_PORT=3306/' /opt/laravel/app/.env",
+    "sed -i 's/# DB_DATABASE=.*/DB_DATABASE=laravel/' /opt/laravel/app/.env",
+    "sed -i 's/# DB_USERNAME=.*/DB_USERNAME=root/' /opt/laravel/app/.env",
+    "sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=root/' /opt/laravel/app/.env",
+
     # go to project
     "cd /opt/laravel",
 
