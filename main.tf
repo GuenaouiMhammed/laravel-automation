@@ -128,7 +128,7 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     "docker exec laravel_app php artisan key:generate",
 
     # fix permissions
-    "docker exec laravel_app chmod -R 777 storage bootstrap/cache",
+    "docker exec laravel_app bash -c "cd /var/www && chmod -R 777 storage bootstrap/cache",
 
     # run migrations
     "docker exec laravel_app php artisan migrate --force || true",
