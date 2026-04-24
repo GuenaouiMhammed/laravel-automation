@@ -12,7 +12,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./app:/var/www   # ✅ ADD THIS
+      - /opt/laravel/app:/var/www   # ✅ THIS IS THE FIX
     depends_on:
       - app
 
