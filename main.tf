@@ -151,9 +151,9 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     "docker exec laravel_app bash -c 'cd /var/www && php artisan config:clear && php artisan cache:clear'",
 
     # debug
-    "docker ps"
+    "docker ps",
 
-    "docker exec laravel_app bash -c 'chmod -R 775 /var/www/storage /var/www/bootstrap/cache'",
+    "docker exec laravel_app bash -c 'chmod -R 775 /var/www/storage /var/www/bootstrap/cache'"
   ]
 }
 }
