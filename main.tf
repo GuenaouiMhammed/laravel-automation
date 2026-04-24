@@ -118,12 +118,15 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
 
     "sleep 20",
 
+    "docker exec laravel_app php artisan key:generate --force",
+    
     # force correct DB config INSIDE container
     "docker exec laravel_app bash -c \"sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /var/www/.env\"",
     "docker exec laravel_app bash -c \"sed -i 's/DB_HOST=.*/DB_HOST=db/' /var/www/.env\"",
     "docker exec laravel_app bash -c \"sed -i 's/# DB_DATABASE=.*/DB_DATABASE=laravel/' /var/www/.env\"",
     "docker exec laravel_app bash -c \"sed -i 's/# DB_USERNAME=.*/DB_USERNAME=root/' /var/www/.env\"",
     "docker exec laravel_app bash -c \"sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=root/' /var/www/.env\"",
+    
 
     # clear cache properly
     "docker exec laravel_app rm -f /var/www/bootstrap/cache/config.php",
