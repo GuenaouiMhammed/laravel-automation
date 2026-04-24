@@ -70,6 +70,8 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     }
   }
 
+
+
   ################################
   # SSH CONNECTION
   ################################
@@ -134,6 +136,7 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     # debug
     "docker ps"
   ]
+}
 }
 
 ############################
