@@ -93,46 +93,47 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     ]
   }
 
-  ################################
-  # FILE UPLOAD (UPDATED)
-  ################################
-  provisioner "file" {
-    source      = "app"   # ✅ your Laravel folder
-    destination = "/opt/laravel/app"
-  }
-
-provisioner "file" {
-  source      = "Dockerfile"
-  destination = "/opt/laravel/Dockerfile"
-}
-
-  provisioner "file" {
-    source      = "docker-compose.yml"
-    destination = "/opt/laravel/docker-compose.yml"
-  }
-
-  provisioner "file" {
-    source      = "nginx.conf"
-    destination = "/opt/laravel/nginx.conf"
-  }
-
-  ################################
-  # DEPLOY (UPDATED)
-  ################################
   provisioner "remote-exec" {
-    inline = [
-      "cd /opt/laravel",
-      "docker compose down 2>/dev/null || true",
-      "docker compose up -d",
-      "sleep 10",
+  inline = [
+    # wait for VM ready
+    "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do sleep 5; done",
 
-      # Laravel fixes
-      "docker exec laravel_app chmod -R 777 storage bootstrap/cache || true",
-      "docker exec laravel_app php artisan migrate --force || true",
+    # fix DNS (your original)
+    "echo 'nameserver 8.8.8.8' > /etc/resolv.conf",
+    "echo 'nameserver 1.1.1.1' >> /etc/resolv.conf",
 
-      "docker ps"
-    ]
-  }
+    # install git
+    "apt update && apt install -y git",
+
+    # clone project
+    "rm -rf /opt/laravel",
+    "git clone https://github.com/GuenaouiMhammed/laravel-automation.git /opt/laravel",
+
+    # create .env
+    "cp /opt/laravel/app/.env.example /opt/laravel/app/.env",
+
+    # go to project
+    "cd /opt/laravel",
+
+    # start containers
+    "docker compose up -d --build",
+    "sleep 15",
+
+    # ✅ INSTALL DEPENDENCIES (THIS IS THE KEY FIX)
+    "docker exec laravel_app composer install",
+
+    # generate key
+    "docker exec laravel_app php artisan key:generate",
+
+    # fix permissions
+    "docker exec laravel_app chmod -R 777 storage bootstrap/cache",
+
+    # run migrations
+    "docker exec laravel_app php artisan migrate --force || true",
+
+    # debug
+    "docker ps"
+  ]
 }
 
 ############################
