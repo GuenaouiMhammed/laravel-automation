@@ -97,63 +97,42 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
 
   #Deployment
 
-  provisioner "remote-exec" {
+ provisioner "remote-exec" {
   inline = [
-    # wait for VM ready
     "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do sleep 5; done",
 
-    # DNS fix
     "echo 'nameserver 8.8.8.8' > /etc/resolv.conf",
     "echo 'nameserver 1.1.1.1' >> /etc/resolv.conf",
 
-    # install git
     "apt update && apt install -y git",
 
-    # clone project
     "rm -rf /opt/laravel",
     "git clone https://github.com/GuenaouiMhammed/laravel-automation.git /opt/laravel",
 
-    # prepare env
+    # use your committed .env OR create clean one
     "cp /opt/laravel/app/.env.example /opt/laravel/app/.env",
 
-    # fix DB config INSIDE container (this is the real fix)
-"docker exec laravel_app bash -c \"sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /var/www/.env\"",
-"docker exec laravel_app bash -c \"sed -i 's/DB_HOST=.*/DB_HOST=db/' /var/www/.env\"",
-"docker exec laravel_app bash -c \"sed -i 's/DB_PORT=.*/DB_PORT=3306/' /var/www/.env\"",
-"docker exec laravel_app bash -c \"sed -i 's/DB_DATABASE=.*/DB_DATABASE=laravel/' /var/www/.env\"",
-"docker exec laravel_app bash -c \"sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' /var/www/.env\"",
-"docker exec laravel_app bash -c \"sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' /var/www/.env\"",
-
-    # go to project
     "cd /opt/laravel",
 
-    # start containers
     "docker compose up -d --build",
 
-    # wait for containers (IMPORTANT)
     "sleep 20",
 
-    # install dependencies
-    "docker exec laravel_app bash -c 'cd /var/www && composer install'",
-
-    # generate key
-    "docker exec laravel_app bash -c 'cd /var/www && php artisan key:generate'",
-
+    # force correct DB config INSIDE container
+    "docker exec laravel_app bash -c \"sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /var/www/.env\"",
     "docker exec laravel_app bash -c \"sed -i 's/DB_HOST=.*/DB_HOST=db/' /var/www/.env\"",
+    "docker exec laravel_app bash -c \"sed -i 's/# DB_DATABASE=.*/DB_DATABASE=laravel/' /var/www/.env\"",
+    "docker exec laravel_app bash -c \"sed -i 's/# DB_USERNAME=.*/DB_USERNAME=root/' /var/www/.env\"",
+    "docker exec laravel_app bash -c \"sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=root/' /var/www/.env\"",
 
-    # ✅ FIX PERMISSIONS (CORRECT PATH)
-    "docker exec laravel_app bash -c 'cd /var/www && chmod -R 777 storage bootstrap/cache'",
+    # clear cache properly
+    "docker exec laravel_app rm -f /var/www/bootstrap/cache/config.php",
+    "docker exec laravel_app php artisan config:clear",
 
     # run migrations
-    "docker exec laravel_app bash -c 'cd /var/www && php artisan migrate --force || true'",
+    "docker exec laravel_app php artisan migrate --force",
 
-    # clear caches (extra safety)
-    "docker exec laravel_app bash -c 'cd /var/www && php artisan config:clear && php artisan cache:clear'",
-
-    # debug
-    "docker ps",
-
-    "docker exec laravel_app bash -c 'chmod -R 775 /var/www/storage /var/www/bootstrap/cache'"
+    "docker ps"
   ]
 }
 }
