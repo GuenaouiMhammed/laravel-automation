@@ -117,22 +117,26 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     # prepare env BEFORE starting containers
 "cp /opt/laravel/app/.env.example /opt/laravel/app/.env",
 
-"sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /opt/laravel/app/.env",
-"sed -i 's/DB_HOST=.*/DB_HOST=db/' /opt/laravel/app/.env",
-"sed -i 's/# DB_DATABASE=.*/DB_DATABASE=laravel/' /opt/laravel/app/.env",
-"sed -i 's/# DB_USERNAME=.*/DB_USERNAME=root/' /opt/laravel/app/.env",
-"sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=root/' /opt/laravel/app/.env",
+# force DB config (NO COMMENTS)
+"sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' /opt/laravel/app/.env",
+"sed -i 's/^#* *DB_HOST=.*/DB_HOST=db/' /opt/laravel/app/.env",
+"sed -i 's/^#* *DB_PORT=.*/DB_PORT=3306/' /opt/laravel/app/.env",
+"sed -i 's/^#* *DB_DATABASE=.*/DB_DATABASE=laravel/' /opt/laravel/app/.env",
+"sed -i 's/^#* *DB_USERNAME=.*/DB_USERNAME=root/' /opt/laravel/app/.env",
+"sed -i 's/^#* *DB_PASSWORD=.*/DB_PASSWORD=root/' /opt/laravel/app/.env",
 
 # THEN start containers
 "docker compose up -d --build",
 
     "sleep 20",
 
-    "docker exec laravel_app php artisan key:generate --force",
+    
 
     # clear cache properly
     "docker exec laravel_app rm -f /var/www/bootstrap/cache/config.php",
     "docker exec laravel_app php artisan config:clear",
+    
+    "docker exec laravel_app php artisan key:generate --force",
 
     # run migrations
     "docker exec laravel_app php artisan migrate --force",

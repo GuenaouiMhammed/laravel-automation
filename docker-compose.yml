@@ -12,17 +12,21 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./app:/var/www   # ✅ ADD THIS
     depends_on:
       - app
 
   db:
     image: mariadb:10.6
     container_name: mariadb
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: laravel
     ports:
       - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
 
 volumes:
   db_data:
