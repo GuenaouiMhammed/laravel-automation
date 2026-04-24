@@ -15,7 +15,7 @@ COPY app/ /var/www
 # backend deps
 RUN composer install --no-interaction --optimize-autoloader
 
-# frontend build (FIXES YOUR CURRENT UI ISSUE)
+# 🔥 THIS IS THE IMPORTANT PART
 RUN npm install && npm run build
 
 # create storage structure + fix perms
