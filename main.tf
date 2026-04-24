@@ -130,16 +130,18 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
 
     "sleep 20",
 
-    
+    "docker exec laravel_app npm install",
+    "docker exec laravel_app npm run build",
 
     # clear cache properly
     "docker exec laravel_app rm -f /var/www/bootstrap/cache/config.php",
     "docker exec laravel_app php artisan config:clear",
-    
+
     "docker exec laravel_app php artisan key:generate --force",
 
     # run migrations
     "docker exec laravel_app php artisan migrate --force",
+    
 
     "docker ps"
   ]
