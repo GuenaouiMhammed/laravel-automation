@@ -95,12 +95,14 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     ]
   }
 
+  #Deployment
+
   provisioner "remote-exec" {
   inline = [
     # wait for VM ready
     "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do sleep 5; done",
 
-    # fix DNS (your original)
+    # DNS fix
     "echo 'nameserver 8.8.8.8' > /etc/resolv.conf",
     "echo 'nameserver 1.1.1.1' >> /etc/resolv.conf",
 
@@ -111,7 +113,7 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
     "rm -rf /opt/laravel",
     "git clone https://github.com/GuenaouiMhammed/laravel-automation.git /opt/laravel",
 
-    # create .env
+    # prepare env
     "cp /opt/laravel/app/.env.example /opt/laravel/app/.env",
 
     # go to project
@@ -119,19 +121,24 @@ resource "proxmox_virtual_environment_vm" "laravel_vm" {
 
     # start containers
     "docker compose up -d --build",
-    "sleep 15",
 
-    # ✅ INSTALL DEPENDENCIES (THIS IS THE KEY FIX)
-    "docker exec laravel_app composer install",
+    # wait for containers (IMPORTANT)
+    "sleep 20",
+
+    # install dependencies
+    "docker exec laravel_app bash -c 'cd /var/www && composer install'",
 
     # generate key
-    "docker exec laravel_app php artisan key:generate",
+    "docker exec laravel_app bash -c 'cd /var/www && php artisan key:generate'",
 
-    # fix permissions
-    "docker exec laravel_app bash -c "cd /var/www && chmod -R 777 storage bootstrap/cache",
+    # ✅ FIX PERMISSIONS (CORRECT PATH)
+    "docker exec laravel_app bash -c 'cd /var/www && chmod -R 777 storage bootstrap/cache'",
 
     # run migrations
-    "docker exec laravel_app php artisan migrate --force || true",
+    "docker exec laravel_app bash -c 'cd /var/www && php artisan migrate --force || true'",
+
+    # clear caches (extra safety)
+    "docker exec laravel_app bash -c 'cd /var/www && php artisan config:clear && php artisan cache:clear'",
 
     # debug
     "docker ps"
